@@ -47,49 +47,149 @@ Section S.
     (SN : st / x => n)
     (SM : st / x => m) :
     n = m. 
-  Proof. admit. Admitted.
+  Proof.
+    generalize dependent m.
+    induction SN; intros.
+      inversion SM; subst.
+      reflexivity.
+      contradiction.
+      inversion SM; subst.
+      contradiction.
+      apply IHSN. assumption.
+  Qed.
   
   Lemma update_eq (st : state) (x : id) (n : A) :
     st [x <- n] / x => n.
-  Proof. admit. Admitted.
+    Proof.
+      unfold update.
+      apply st_binds_hd.
+    Qed.
 
   Lemma update_neq (st : state) (x2 x1 : id) (n m : A)
         (NEQ : x2 <> x1) : st / x1 => m <-> st [x2 <- n] / x1 => m.
-  Proof. admit. Admitted.
+  Proof. 
+    unfold update. split.
+    intros H. apply st_binds_tl. 
+       symmetry. exact NEQ.
+       assumption.
+    intros H. inversion H.
+       rewrite H0 in NEQ. contradiction.
+       assumption.
+  Qed.
   
   Lemma update_shadow (st : state) (x1 x2 : id) (n1 n2 m : A) :
     st[x2 <- n1][x2 <- n2] / x1 => m <-> st[x2 <- n2] / x1 => m.
-  Proof. admit. Admitted.
+  Proof. 
+    specialize id_eq_dec with x1 x2.
+    intros [H | H].
+    rewrite H. split.
+       intros H1. inversion H1.
+         apply update_eq.
+         contradiction.
+      intros H1. inversion H1.
+         apply update_eq. 
+         contradiction.
+    split.
+       intros H1. apply update_neq. { symmetry. assumption. }
+        apply update_neq in H1. apply update_neq in H1. 
+         assumption.
+         symmetry. assumption.
+         symmetry. assumption.
+      intros H1. apply update_neq. { symmetry. assumption. } 
+        apply update_neq. { symmetry. assumption. }  
+        apply update_neq in H1.
+         assumption.
+         symmetry. assumption.
+  Qed.
   
   Lemma update_same (st : state) (x1 x2 : id) (n1 m : A)
         (SN : st / x1 => n1)
         (SM : st / x2 => m) :
     st [x1 <- n1] / x2 => m.
-  Proof. admit. Admitted.
+  Proof.
+    destruct (id_eq_dec x1 x2) as [Heq | Hneq].
+      rewrite Heq in *. 
+      assert (n1 = m) by (apply state_deterministic with (st := st) (x := x2); assumption).
+      subst m.
+      apply update_eq.
+      apply update_neq.
+        assumption.
+        assumption.
+  Qed.
   
   Lemma update_permute (st : state) (x1 x2 x3 : id) (n1 n2 m : A)
         (NEQ : x2 <> x1)
         (SM : st [x2 <- n1][x1 <- n2] / x3 => m) :
     st [x1 <- n2][x2 <- n1] / x3 => m.
-  Proof. admit. Admitted.
+  Proof.
+    destruct (id_eq_dec x3 x1) as [Heq1 | Hneq1].
+      rewrite Heq1 in *.
+      assert (m = n2).
+        inversion SM; subst.
+        reflexivity.
+        contradiction.
+      subst m.
+      apply update_neq.
+      assumption.
+        apply update_eq.
+      destruct (id_eq_dec x3 x2) as [Heq2 | Hneq2].
+        rewrite Heq2 in *.
+        assert (m = n1).
+          apply update_neq in SM.
+          inversion SM; subst.
+          reflexivity.
+          contradiction.
+          symmetry. assumption.
+        subst m.
+        apply update_eq.
+        apply update_neq.
+          symmetry. assumption.
+          apply update_neq.
+             symmetry. assumption.
+             apply update_neq in SM.
+                apply update_neq in SM.
+                   assumption.
+                   symmetry. assumption.
+                symmetry. assumption.
+  Qed.
 
   Lemma state_extensional_equivalence (st st' : state) (H: forall x z, st / x => z <-> st' / x => z) : st = st'.
-  Proof. admit. Admitted.
+Proof. Abort.
 
   Definition state_equivalence (st st' : state) := forall x a, st / x => a <-> st' / x => a.
 
   Notation "st1 ~~ st2" := (state_equivalence st1 st2) (at level 0).
 
   Lemma st_equiv_refl (st: state) : st ~~ st.
-  Proof. admit. Admitted.
+  Proof.
+    unfold state_equivalence.
+    intros x a.
+    apply iff_refl.
+  Qed.
 
   Lemma st_equiv_symm (st st': state) (H: st ~~ st') : st' ~~ st.
-  Proof. admit. Admitted.
+  Proof.
+    unfold state_equivalence in *.
+    intros x a.
+    specialize (H x a).
+    apply iff_sym. assumption.
+  Qed.
 
   Lemma st_equiv_trans (st st' st'': state) (H1: st ~~ st') (H2: st' ~~ st'') : st ~~ st''.
-  Proof. admit. Admitted.
+  Proof.
+    unfold state_equivalence in *.
+    intros x a.
+    specialize (H1 x a).
+    specialize (H2 x a).
+    apply iff_trans with (st' / x => a); assumption.
+  Qed.
 
   Lemma equal_states_equive (st st' : state) (HE: st = st') : st ~~ st'.
-  Proof. admit. Admitted.
+  Proof.
+    unfold state_equivalence.
+    intros x a.
+    rewrite HE.
+    apply iff_refl.
+  Qed.
   
 End S.
