@@ -156,9 +156,50 @@ Section S.
   Lemma state_extensional_equivalence (st st' : state) (H: forall x z, st / x => z <-> st' / x => z) : st = st'.
 Proof. Abort.
 
+  Lemma st_eval_binds (st: state) (x: id) (n: A) : (st_eval st x = Some n) <-> (st / x => n).
+  Proof.
+    induction st.
+    split.
+       intros H. unfold st_eval in H. discriminate.
+       intros H. inversion H.
+     split.
+       intros H. simpl in H. destruct a as [x' a]. destruct (id_eq_dec x' x).
+         injection H as H. rewrite e. rewrite H. apply st_binds_hd.
+         apply IHst in H. apply st_binds_tl. symmetry. assumption. assumption.
+       intros H. inversion H.
+         simpl. destruct (id_eq_dec x x).
+           reflexivity.
+           contradiction.
+         simpl. destruct (id_eq_dec id' x).
+           rewrite e in H2. contradiction.
+           apply IHst. assumption.
+  Qed.
+
+  Lemma state_extensional_equivalence_neg : 
+    (exists a : A, True) -> ~(forall st st', (forall x z, st/x => z <-> st' / x => z) -> st = st').
+  Proof. unfold not. intros [a] state_extensional_equivalence.
+    specialize state_extensional_equivalence with ([(Id 0, a); (Id 0, a)]) ([(Id 0, a)]).
+    intros. assert (H1: (forall (x : id) (z : A),
+     st_binds ([(Id 0, a); (Id 0, a)]) x z <-> st_binds ([(Id 0, a)]) x z)). {
+       intros. rewrite <- st_eval_binds. rewrite <- st_eval_binds. simpl. destruct (id_eq_dec (Id 0) x).
+        apply iff_refl.
+        apply iff_refl.
+     }
+     apply state_extensional_equivalence in H1. discriminate.
+  Qed.
+
   Definition state_equivalence (st st' : state) := forall x a, st / x => a <-> st' / x => a.
 
   Notation "st1 ~~ st2" := (state_equivalence st1 st2) (at level 0).
+
+  Lemma equiv_update (st st' : state) (id: id) (x: A) (HS: st ~~ st') :
+    (st[id <- x]) ~~ (st'[id <- x]).
+  Proof. 
+    split; intros; destruct (id_eq_dec id x0); 
+    inversion H; try congruence; subst;
+    try apply st_binds_hd;
+    try (apply st_binds_tl; try auto; apply HS; assumption).
+  Qed.
 
   Lemma st_equiv_refl (st: state) : st ~~ st.
   Proof.
@@ -191,5 +232,4 @@ Proof. Abort.
     rewrite HE.
     apply iff_refl.
   Qed.
-  
 End S.

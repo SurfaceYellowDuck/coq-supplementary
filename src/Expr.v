@@ -207,6 +207,14 @@ Module SmokeTest.
   Lemma zero_always x (s : state Z) : [| Var x [*] Nat 0 |] s => Z.zero.
   Proof. Abort.
   
+    Lemma zero_always_neg : ~ (forall x s, [| Var x [*] Nat 0 |] s => Z.zero).
+    Proof.
+      unfold not. intros zero_always.
+      specialize zero_always with (Id 0) [].
+      inversion zero_always. 
+      inversion VALA. apply st_eval_binds in VAR. unfold st_eval in VAR. discriminate.
+    Qed.
+
   Lemma nat_always n (s : state Z) : [| Nat n |] s => n.
   Proof.
     apply bs_Nat.
@@ -220,8 +228,8 @@ Module SmokeTest.
     assert ((za * 2)%Z = (za + za)%Z).
     { symmetry. apply (Zplus_diag_eq_mult_2 za). }
     subst. inversion VALB. subst. rewrite H. apply bs_Add.
-      + assumption.
-      + assumption.
+      assumption.
+      assumption.
   Qed.
   
 End SmokeTest.
@@ -503,7 +511,7 @@ Lemma eq_eq_ceq (e1 e2 : expr) :
              econstructor. eassumption. eapply (IHC zb H VALB). assumption.
              econstructor. eassumption. eapply (IHC zb H VALB). assumption. assumption.
              econstructor. eassumption. eapply (IHC zb H VALB). assumption. assumption.
-    -  specialize (H (Hole)). simpl in H. assumption.
+    specialize (H (Hole)). simpl in H. assumption.
   Qed.
 
 Module SmallStep.
@@ -743,29 +751,29 @@ Module SmallStep.
     Proof. 
     assert (HR: forall e s z, [| e |] s => z -> (s |- e -->> (Nat z))).
     { clear e. clear s. clear z. intros. generalize dependent z. induction e; intros z0 H.
-      * inversion H. apply se_Stop.
-      * inversion H. rewrite <- H2 in *. apply se_Step with (Nat z). apply ss_Var. assumption. apply se_Stop.
-      * inversion H; apply ss_eval_binop with za zb;
+      inversion H. apply se_Stop.
+      inversion H. rewrite <- H2 in *. apply se_Step with (Nat z). apply ss_Var. assumption. apply se_Stop.
+      inversion H; apply ss_eval_binop with za zb;
         solve
         [ apply IHe1; assumption
         | apply IHe2; assumption 
         | congruence ]. }
     split. 
-    - apply HR.
-    - intros. dependent induction H.
-      * constructor.
-      * specialize IHss_eval with z. assert (H1: Nat z = Nat z). { reflexivity. }
+    apply HR.
+    intros. dependent induction H.
+      constructor.
+      specialize IHss_eval with z. assert (H1: Nat z = Nat z). { reflexivity. }
         apply IHss_eval in H1. clear IHss_eval.
         generalize dependent z.
         dependent induction HStep; intros; subst.
-        + inversion H1; subst. constructor. assumption.
-        + inversion H1; apply IHHStep in VALA; 
+        inversion H1; subst. constructor. assumption.
+        inversion H1; apply IHHStep in VALA; 
           try solve [apply HR in VALA; assumption];
           apply_eval za zb; assumption.
-        + inversion H1; apply IHHStep in VALB; 
+        inversion H1; apply IHHStep in VALB; 
           try solve [apply HR in VALB; assumption];
           apply_eval za zb; assumption.
-        + inversion H1; subst. assumption.
+        inversion H1; subst. assumption.
   Qed.
   
 End SmallStep.
@@ -814,7 +822,7 @@ Module StaticSemantics.
   Lemma type_preservation e t t' (HS: t' << t) (HT: e :-: t) : forall st e' (HR: st |- e ~~> e'), e' :-: t'.
   Proof. Abort.
 
-  Lemma type_preservation_contr : ~ (forall e e' t t' st (HS: t' << t) (HT: e :-: t) (HR: st |- e ~~> e'), e' :-: t'). 
+  Lemma type_preservation_neg : ~ (forall e e' t t' st (HS: t' << t) (HT: e :-: t) (HR: st |- e ~~> e'), e' :-: t'). 
   Proof.
     unfold not. 
     intros.

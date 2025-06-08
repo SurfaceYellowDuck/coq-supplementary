@@ -344,7 +344,59 @@ Lemma bs_equiv_states
   (HE1          : equivalent_states st1 st1')  
   (H            : (st1, i, o) == s ==> (st2, i', o')) :
   exists st2',  equivalent_states st2 st2' /\ (st1', i, o) == s ==> (st2', i', o').
-Proof. admit. Admitted.
+Proof. 
+  generalize dependent st1'.
+  dependent induction H; intros.
+   exists st1'. auto.
+   exists st1'[x <- z]. split.
+     apply equiv_update. assumption.
+     constructor. apply variable_relevance with st1; auto.
+   exists st1'[x <- z]. split. 
+     apply equiv_update. assumption.
+     constructor.
+   exists st1'. split; try auto. constructor. eapply variable_relevance; try apply HE1; auto.
+   destruct c' as [[st4 i4] o4]. 
+    specialize IHbs_int1 with i o i4 o4 st1 st4 st1'. apply IHbs_int1 in HE1; try constructor.
+    destruct HE1 as [st4' [HE1 HBs1]].
+    specialize IHbs_int2 with i4 o4 i' o' st4 st2 st4'. apply IHbs_int2 in HE1; try constructor.
+    destruct HE1 as [st2' [HE1 HBs2]].
+    exists st2'. split. 
+     assumption. 
+     econstructor; eassumption.
+    specialize IHbs_int with i o i' o' st1 st2 st1'. 
+    assert (HE2: equivalent_states st1 st1'). { apply HE1. }
+    apply IHbs_int in HE1; try constructor.
+    destruct HE1 as [st2' [HE1 HBs]].
+    exists st2'. split.
+     assumption.
+     apply bs_If_True.
+       eapply variable_relevance; auto.
+       assumption.
+    specialize IHbs_int with i o i' o' st1 st2 st1'. 
+    assert (HE2: equivalent_states st1 st1'). { apply HE1. }
+    apply IHbs_int in HE1; try constructor.
+    destruct HE1 as [st2' [HE1 HBs]].
+    exists st2'. split.
+     assumption.
+     apply bs_If_False.
+       eapply variable_relevance; auto.
+       assumption.
+    assert (HE2: equivalent_states st1 st1'). { apply HE1. }
+    destruct c' as [[st4 i4] o4]. 
+    specialize IHbs_int1 with i o i4 o4 st1 st4 st1'. apply IHbs_int1 in HE1; try constructor.
+    destruct HE1 as [st4' [HE1 HBs1]].
+    specialize IHbs_int2 with i4 o4 i' o' st4 st2 st4'. apply IHbs_int2 in HE1; try constructor.
+    destruct HE1 as [st2' [HE1 HBs2]].
+    exists st2'. split. 
+     assumption. 
+     eapply bs_While_True.
+       eapply variable_relevance; auto.
+       eassumption.
+       assumption.
+    exists st1'. split.
+     assumption.
+     apply bs_While_False. eapply variable_relevance; auto.
+Qed.
   
 (* Contextual equivalence is equivalent to the semantic one *)
 (* TODO: no longer needed *)
